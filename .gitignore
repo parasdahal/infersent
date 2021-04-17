@@ -1,1 +1,4 @@
-.vscode
+.data
+.vector_cache
+logs
+__pycache__

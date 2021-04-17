@@ -1,0 +1,10 @@
+{
+  "editor.defaultFormatter": "ms-python.python",
+  "editor.formatOnSave": true,
+  "python.formatting.provider": "yapf",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.languageServer": "Pylance",
+  "python.pythonPath": "/opt/miniconda3/envs/atcs-pytorch/bin/python"
+}
