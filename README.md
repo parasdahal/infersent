@@ -17,11 +17,11 @@ This repository implements and experiments with several models for supervised le
 ## Organization
 This repository containes the  following major components:
 
-* `models.py` - Pytorch Modules for the encoder and classifier models.
+* `models.py` - Pytorch modules for the encoder and classifier models.
 * `data.py` - `SNLIData` class for preparing data for training and evaluation.
-* `train.py` - Pytorch Lightning model and training CLI interface
+* `train.py` - Pytorch Lightning model and training CLI interface for training with different encoders.
 * `eval.py` - CLI interface that takes model checkpoint and runs evaluation on SNLI and SentEval tasks.
-* `demo.ipynb` - Jupyter notebook for making predictions and analyzing the models.
+* `demo.ipynb` - Jupyter notebook for testing model inference and analyzing the results.
 
 ## Setup
 
