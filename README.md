@@ -14,6 +14,15 @@ This repository implements and experiments with several models for supervised le
 | BiLSTM-maxpool | 86.50    | 85.87     | 79.075         | 78.831         |
 
 
+## Organization
+This repository containes the  following major components:
+
+* `models.py` - Pytorch Modules for the encoder and classifier models.
+* `data.py` - `SNLIData` class for preparing data for training and evaluation.
+* `train.py` - Pytorch Lightning model and training CLI interface
+* `eval.py` - CLI interface that takes model checkpoint and runs evaluation on SNLI and SentEval tasks.
+* `demo.ipynb` - Jupyter notebook for making predictions and analyzing the models.
+
 ## Setup
 
 ```shell
