@@ -1,4 +1,5 @@
 .data
 .vector_cache
 logs
+SentEval
 __pycache__

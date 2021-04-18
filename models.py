@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import pytorch_lightning as pl
 
 
 ###############################################################################
@@ -36,6 +34,7 @@ class LSTMEncoder(nn.Module):
 
     self.batch_size = batch_size
     self.hidden_dim = hidden_dim
+    self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     self.emb_dim = 300
     self.embedding = nn.Embedding.from_pretrained(
@@ -52,7 +51,9 @@ class LSTMEncoder(nn.Module):
 
   def forward(self, x):
     x = self.projection(x)
-    _, (h, _) = self.lstm(x)
+    h0 = torch.zeros(1, x.shape[0], self.hidden_dim).to(self.device)
+    c0 = torch.zeros(1, x.shape[0], self.hidden_dim).to(self.device)
+    _, (h, _) = self.lstm(x, (h0, c0))
     return torch.squeeze(h)  # batch_size x hidden_dim
 
 
@@ -68,6 +69,7 @@ class BiLSTMEncoder(nn.Module):
     self.batch_size = batch_size
     self.hidden_dim = hidden_dim
     self.maxpool = maxpool
+    self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     self.emb_dim = 300
     self.embedding = nn.Embedding.from_pretrained(
@@ -83,13 +85,10 @@ class BiLSTMEncoder(nn.Module):
 
   def forward(self, x):
 
-    # h0 = torch.zeros(self.num_layers * 2, self.batch_size,
-    #                  self.hidden_dim).to(self.device)
-    # c0 = torch.zeros(self.num_layers * 2, self.batch_size,
-    #                  self.hidden_dim).to(self.device)
-
+    h0 = torch.zeros(2, x.shape[0], self.hidden_dim).to(self.device)
+    c0 = torch.zeros(2, x.shape[0], self.hidden_dim).to(self.device)
     x = self.projection(x)
-    output, _ = self.lstm(x)
+    output, _ = self.lstm(x, (h0, c0))
 
     if self.maxpool:
       # Perform maxpool on each output time step
@@ -104,13 +103,13 @@ class BiLSTMEncoder(nn.Module):
 
 
 ###############################################################################
-## InferSent model
+## Classifier MLP model
 ###############################################################################
-class InferSentClassifier(nn.Module):
+class Classifier(nn.Module):
 
   def __init__(self, input_dim, hidden_dim, out_dim):
 
-    super(InferSentClassifier, self).__init__()
+    super(Classifier, self).__init__()
     self.lin1 = nn.Linear(input_dim, hidden_dim)
     self.lin2 = nn.Linear(hidden_dim, hidden_dim)
     self.lin3 = nn.Linear(hidden_dim, out_dim)
@@ -127,14 +126,15 @@ class InferSentClassifier(nn.Module):
 
 
 ###############################################################################
-## NLI pytorch lightning model to bring it all together
+## InferSent model to bring it all together
 ###############################################################################
-class NLINet(pl.LightningModule):
 
-  def __init__(self, encoder_type, enc_hidden_dim, cls_hidden_dim, lr):
-    super().__init__()
-    self.save_hyperparameters()
 
+class InferSent(nn.Module):
+
+  def __init__(self, encoder_type, enc_hidden_dim, cls_hidden_dim):
+    super(InferSent, self).__init__()
+    # Architecture
     if encoder_type == 'LSTM':
       self.encoder = LSTMEncoder(enc_hidden_dim)
       # Scale by 1 (direction) * 4 (concatenation of u, v |u-v| and u*v).
@@ -151,47 +151,14 @@ class NLINet(pl.LightningModule):
     else:
       raise Exception('Unknown model type')
 
-    self.classifier = InferSentClassifier(self.cls_input_dim,
-                                          cls_hidden_dim,
-                                          out_dim=3)
-    self.criterion = nn.CrossEntropyLoss()
+    self.classifier = Classifier(self.cls_input_dim, cls_hidden_dim, out_dim=3)
 
-  def forward(self, premise, hypothesis):
+  def forward(self, batch):
+    (premise, hypothesis), _ = batch
     premise_encoded = self.encoder(premise)
     hypothesis_encoded = self.encoder(hypothesis)
     out = self.classifier(premise_encoded, hypothesis_encoded)
     return out
 
-  def configure_optimizers(self):
-    optimizer = torch.optim.SGD(self.parameters(), lr=self.hparams['lr'])
-    return optimizer
-
-  def training_step(self, train_batch, batch_idx):
-    (premise, hypothesis), label = train_batch
-    out = self.forward(premise, hypothesis)
-    loss = self.criterion(out.float(), label)
-    self.log("train_loss", loss)
-    accuracy = float(torch.sum(
-        label == torch.argmax(out, dim=1)).detach()) / (len(label) * 1.0)
-    self.log("test_acc", accuracy)
-    return {'train_loss': loss, 'train_acc': accuracy}
-
-  def validation_step(self, val_batch, batch_idx):
-    (premise, hypothesis), label = val_batch
-    out = self.forward(premise, hypothesis)
-    loss = self.criterion(out.float(), label)
-    self.log("val_loss", loss)
-    accuracy = float(torch.sum(
-        label == torch.argmax(out, dim=1)).detach()) / (len(label) * 1.0)
-    self.log("test_acc", accuracy)
-    return {'val_loss': loss, 'val_acc': accuracy}
-
-  def test_step(self, test_batch, batch_idx):
-    (premise, hypothesis), label = test_batch
-    out = self.forward(premise, hypothesis)
-    loss = self.criterion(out.float(), label)
-    self.log("test_loss", loss)
-    accuracy = float(torch.sum(
-        label == torch.argmax(out, dim=1)).detach()) / (len(label) * 1.0)
-    self.log("test_acc", accuracy)
-    return {'test_loss': loss, 'test_acc': accuracy}
+  def encode(self, sent):
+    return self.encoder(sent)

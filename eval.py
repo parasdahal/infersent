@@ -1,78 +1,114 @@
-import senteval
+import sys
+import numpy as np
+import argparse
+
+# import SentEval
+sys.path.insert(0, './SentEval')
+
+import spacy
+import torch
+from pytorch_lightning import Trainer
+
+from train import NLINet
+from data import SNLIData
+
+spacy_en = spacy.load('en_core_web_sm')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def prepare(params, samples):
-  """
-    In this example we are going to load Glove, 
-    here you will initialize your model.
-    remember to add what you model needs into the params dictionary
-    """
-  _, params.word2id = data.create_dictionary(samples)
-  # load glove/word2vec format
-  params.word_vec = data.get_wordvec(PATH_TO_VEC, params.word2id)
-  # dimensionality of glove embeddings
-  params.wvec_dim = 300
-  return
+def senteval(checkpoint_path, params_senteval):
+  import senteval
+  model = NLINet.load_from_checkpoint(checkpoint_path).to(device)
+  model.eval()
+  data = SNLIData(batch_size=128)
 
+  def prepare(params, samples):
+    params.vocab = data.get_vocab()
+    params.max_len = np.max([len(x) for x in samples])
+    params.wvec_dim = 300
+    return
 
-def batcher(params, batch):
-  """
-    In this example we use the average of word embeddings as a sentence representation.
-    Each batch consists of one vector for sentence.
-    Here you can process each sentence of the batch, 
-    or a complete batch (you may need masking for that).
-    
-    """
-  # if a sentence is empty dot is set to be the only token
-  # you can change it into NULL dependening in your model
-  batch = [sent if sent != [] else ['.'] for sent in batch]
-  embeddings = []
+  def batcher(params, batch):
+    samples = []
+    for sent in batch:
+      sent_idxs = []
+      for token in sent:
+        sent_idxs.append(params.vocab[token])
+      # padding
+      for _ in range(len(sent_idxs) + 1, params.max_len + 1):
+        sent_idxs.append(params.vocab["<pad>"])
+      samples.append(sent_idxs)
 
-  for sent in batch:
-    sentvec = []
-    # the format of a sentence is a lists of words (tokenized and lowercased)
-    for word in sent:
-      if word in params.word_vec:
-        # [number of words, embedding dimensionality]
-        sentvec.append(params.word_vec[word])
-    if not sentvec:
-      vec = np.zeros(params.wvec_dim)
-      # [number of words, embedding dimensionality]
-      sentvec.append(vec)
-    # average of word embeddings for sentence representation
-    # [embedding dimansionality]
-    sentvec = np.mean(sentvec, 0)
-    embeddings.append(sentvec)
-  # [batch size, embedding dimensionality]
-  embeddings = np.vstack(embeddings)
-  return embeddings
+    embed = torch.LongTensor(samples).to(device)
+    return model.model.encode(embed).detach().cpu().numpy()
 
-
-# Set params for SentEval
-# we use logistic regression (usepytorch: Fasle) and kfold 10
-# In this dictionary you can add extra information that you model needs for initialization
-# for example the path to a dictionary of indices, of hyper parameters
-# this dictionary is passed to the batched and the prepare fucntions
-params_senteval = {'task_path': PATH_TO_DATA, 'usepytorch': False, 'kfold': 10}
-# this is the config for the NN classifier but we are going to use scikit-learn logistic regression with 10 kfold
-# usepytorch = False
-#params_senteval['classifier'] = {'nhid': 0, 'optim': 'rmsprop', 'batch_size': 128,
-#                                 'tenacity': 3, 'epoch_size': 2}
-
-# Set up logger
-logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
-
-if __name__ == "__main__":
   se = senteval.engine.SE(params_senteval, batcher, prepare)
 
-  # here you define the NLP taks that your embedding model is going to be evaluated
-  # in (https://arxiv.org/abs/1802.05883) we use the following :
-  # SICKRelatedness (Sick-R) needs torch cuda to work (even when using logistic regression),
-  # but STS14 (semantic textual similarity) is a similar type of semantic task
   transfer_tasks = [
-      'MR', 'CR', 'MPQA', 'SUBJ', 'SST2', 'TREC', 'MRPC', 'SICKEntailment',
-      'STS14'
+      'MR',
+      'CR',
+      'SUBJ',
+      'MPQA',
+      'SST2',
+      'TREC',
+      'MRPC',
+      'SICKEntailment',
   ]
-  # senteval prints the results and returns a dictionary with the scores
+
   results = se.eval(transfer_tasks)
   print(results)
+  return results
+
+
+def process_senteval_result(result_dict):
+  devaccs = []
+  ndevs = []
+  for task, res in result_dict.items():
+    try:
+      devaccs.append(res['devacc'])
+      ndevs.append(res['ndev'])
+    except:
+      pass
+  print('Macro accuracy:', np.mean(devaccs))
+  macros = [(ndevs[i] / sum(ndevs)) * devaccs[i] for i in range(len(devaccs))]
+  print('Micro accuracy:', sum(macros))
+
+
+def snli(checkpoint_path):
+  data = SNLIData(batch_size=128)
+  _, _, test_loader = data.get_iters()
+  model = NLINet.load_from_checkpoint(checkpoint_path).to(device)
+  model.eval()
+  trainer = Trainer(weights_summary=None)
+  test_result = trainer.test(model, test_dataloaders=test_loader, verbose=True)
+  print(test_result)
+  return test_result
+
+
+if __name__ == "__main__":
+
+  parser = argparse.ArgumentParser(
+      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+  parser.add_argument('--checkpoint_path',
+                      type=str,
+                      help='Path to model checkpoint')
+  args = parser.parse_args()
+  params_senteval = {
+      'task_path': './SentEval/data/',
+      'usepytorch': False,
+      'kfold': 5,
+      'classifier': {
+          'nhid': 0,
+          'optim': 'rmsprop',
+          'batch_size': 128,
+          'tenacity': 3,
+          'epoch_size': 2
+      }
+  }
+  print("######### Evaluating SNLI #########")
+  snli(args.checkpoint_path)
+
+  print("######### Evaluating SENTEVAL #########")
+  result_dict = senteval(args.checkpoint_path, params_senteval)
+  process_senteval_result(result_dict)

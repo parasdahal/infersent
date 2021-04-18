@@ -19,6 +19,11 @@ class SNLIData():
     self.label = Field(sequential=False, unk_token=None, is_target=True)
 
     self.train, self.dev, self.test = SNLI.splits(self.text, self.label)
+    self.sizes = {
+        'train': len(self.train),
+        'val': len(self.dev),
+        'test': len(self.test)
+    }
     self.text.build_vocab(self.train, self.dev)
     self.label.build_vocab(self.train)
 
@@ -41,3 +46,6 @@ class SNLIData():
 
   def get_iters(self):
     return self.train_iter, self.dev_iter, self.test_iter
+
+  def get_vocab(self):
+    return self.text.vocab.stoi
