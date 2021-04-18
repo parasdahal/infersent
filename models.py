@@ -171,18 +171,27 @@ class NLINet(pl.LightningModule):
     out = self.forward(premise, hypothesis)
     loss = self.criterion(out.float(), label)
     self.log("train_loss", loss)
-    return loss
+    accuracy = float(torch.sum(
+        label == torch.argmax(out, dim=1)).detach()) / (len(label) * 1.0)
+    self.log("test_acc", accuracy)
+    return {'train_loss': loss, 'train_acc': accuracy}
 
   def validation_step(self, val_batch, batch_idx):
     (premise, hypothesis), label = val_batch
     out = self.forward(premise, hypothesis)
     loss = self.criterion(out.float(), label)
     self.log("val_loss", loss)
-    return loss
+    accuracy = float(torch.sum(
+        label == torch.argmax(out, dim=1)).detach()) / (len(label) * 1.0)
+    self.log("test_acc", accuracy)
+    return {'val_loss': loss, 'val_acc': accuracy}
 
   def test_step(self, test_batch, batch_idx):
     (premise, hypothesis), label = test_batch
     out = self.forward(premise, hypothesis)
     loss = self.criterion(out.float(), label)
     self.log("test_loss", loss)
-    return loss
+    accuracy = float(torch.sum(
+        label == torch.argmax(out, dim=1)).detach()) / (len(label) * 1.0)
+    self.log("test_acc", accuracy)
+    return {'test_loss': loss, 'test_acc': accuracy}
