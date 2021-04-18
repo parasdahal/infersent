@@ -39,7 +39,7 @@ cd SentEval/data/downstream/ && ./get_transfer_data.bash
 Run `train.py` with one of the following encoder types: `MeanEmbedding`, `LSTM`, `BiLSTM`, `BiLSTM-maxpool`. The training process will create model checkpoints, TensorBoard logs and hyperparams file `hparams.yaml` in the `./logs` directory.
 
 ```shell
-python train.py --encoder_type BiLSTM 
+python train.py --encoder_type='BiLSTM'
 ```
 
 ## Evaluation
@@ -50,6 +50,6 @@ Run `eval.py` with a model checkpoint flag to run evaluation tasks on SNLI and S
 python eval.py --checkpoint_path='./logs/MeanEmbedding/version_0/checkpoints/epoch=2-step=12875.ckpt'
 ```
 
-## Pre-trained model
+## Pre-trained models
 
 The model checkpoints and TensorBoard logs can be found here: https://drive.google.com/drive/folders/1Ebjyf0wj31EZMPEBiG1nHW-1JOMMl1IY?usp=sharing
