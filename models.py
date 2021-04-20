@@ -50,9 +50,13 @@ class LSTMEncoder(nn.Module):
                         batch_first=True)
 
   def forward(self, x):
+    lengths = [len(sent) for sent in x]
     x = self.projection(x)
+
     h0 = torch.zeros(1, x.shape[0], self.hidden_dim).to(self.device)
     c0 = torch.zeros(1, x.shape[0], self.hidden_dim).to(self.device)
+
+    x = nn.utils.rnn.pack_padded_sequence(x, lengths, batch_first=True)
     _, (h, _) = self.lstm(x, (h0, c0))
     return torch.squeeze(h)  # batch_size x hidden_dim
 
@@ -86,11 +90,12 @@ class BiLSTMEncoder(nn.Module):
   def forward(self, x):
 
     lengths = [len(sent) for sent in x]
-    x = nn.utils.rnn.pack_padded_sequence(x, lengths, batch_first=True)
+    x = self.projection(x)
 
     h0 = torch.zeros(2, x.shape[0], self.hidden_dim).to(self.device)
     c0 = torch.zeros(2, x.shape[0], self.hidden_dim).to(self.device)
-    x = self.projection(x)
+
+    x = nn.utils.rnn.pack_padded_sequence(x, lengths, batch_first=True)
     padded_output, _ = self.lstm(x, (h0, c0))
     output, _ = nn.utils.rnn.pad_packed_sequence(padded_output,
                                                  batch_first=True)
