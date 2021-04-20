@@ -8,9 +8,7 @@ This repository contains PyTorch implementation and experiment interface for sup
 
 A baseline model `MeanEmbedding` and three LSTM based models `LSTM`, `BiLSTM` and `BiLSTM-maxpool` are trained on NLI task using [SNLI](https://nlp.stanford.edu/projects/snli/) data. The sentence embeddings are evaluated on 8 transfer tasks using [SentEval](https://github.com/facebookresearch/SentEval) framework.
 
-The micro and macro metric for SentEval tasks are computed as defined in Sect
-
-The results are tabulated below:
+The micro and macro metric for SentEval tasks are computed as defined in Section 5 of the InferSent paper [1]. The results are tabulated below:
 
 | Model          | snli-dev | snli-test | senteval-micro | senteval-macro |
 |----------------|----------|-----------|----------------|----------------|
@@ -67,4 +65,8 @@ python eval.py --checkpoint_path='./logs/MeanEmbedding/version_0/checkpoints/epo
 
 ## Pre-trained models
 
-The model checkpoints and TensorBoard logs can be found here: https://drive.google.com/drive/folders/1Ebjyf0wj31EZMPEBiG1nHW-1JOMMl1IY?usp=sharing
+The model checkpoints and TensorBoard logs are public and can be found here: https://drive.google.com/drive/folders/1Ebjyf0wj31EZMPEBiG1nHW-1JOMMl1IY?usp=sharing
+
+## References
+
+[1] A. Conneau, D. Kiela, H. Schwenk, L. Barrault, A. Bordes, Supervised Learning of Universal Sentence Representations from Natural Language Inference Data
