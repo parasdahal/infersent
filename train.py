@@ -91,6 +91,8 @@ class NLINet(pl.LightningModule):
 
 def train(args):
 
+  print('Training arguments: ', args)
+
   seed_everything(args.seed)
 
   os.makedirs(args.log_dir, exist_ok=True)

@@ -3,8 +3,14 @@
 [![Paper](http://img.shields.io/badge/paper-arxiv.1705.02364-B31B1B.svg)](https://arxiv.org/abs/1705.02364)
 [![Conference](http://img.shields.io/badge/EMNLP-2017-4b44ce.svg)](https://www.aclweb.org/anthology/events/emnlp-2017/)
 
-This repository implements and experiments with several models for supervised learning with NLI data for learning universal sentence representations.
+This repository contains PyTorch implementation and experiment interface for supervised NLI task with different models for learning universal sentence representations.
 #### Results
+
+A baseline model `MeanEmbedding` and three LSTM based models `LSTM`, `BiLSTM` and `BiLSTM-maxpool` are trained on NLI task using [SNLI](https://nlp.stanford.edu/projects/snli/) data. The sentence embeddings are evaluated on 8 transfer tasks using [SentEval](https://github.com/facebookresearch/SentEval) framework.
+
+The micro and macro metric for SentEval tasks are computed as defined in Sect
+
+The results are tabulated below:
 
 | Model          | snli-dev | snli-test | senteval-micro | senteval-macro |
 |----------------|----------|-----------|----------------|----------------|
@@ -15,12 +21,12 @@ This repository implements and experiments with several models for supervised le
 
 
 ## Organization
-This repository containes the  following major components:
+This repository is organized into the following major components:
 
 * `models.py` - Pytorch modules for the encoder and classifier models.
 * `data.py` - `SNLIData` class for preparing data for training and evaluation.
-* `train.py` - Pytorch Lightning model and training CLI interface for training with different encoders.
-* `eval.py` - CLI interface that takes model checkpoint and runs evaluation on SNLI and SentEval tasks.
+* `train.py` - Pytorch Lightning model and training CLI for training with different encoders.
+* `eval.py` - CLI that takes model checkpoint and runs evaluation on SNLI and SentEval tasks.
 * `demo.ipynb` - Jupyter notebook for testing model inference and analyzing the results.
 
 ## Setup
@@ -35,7 +41,7 @@ python -m spacy download en_core_web_sm
 
 ```
 
-To run evaluation with SentEval, proceed as follows:
+To run evaluation with SentEval, prepare SentEval installation as follows:
 
 ```shell
 git clone https://github.com/facebookresearch/SentEval.git
