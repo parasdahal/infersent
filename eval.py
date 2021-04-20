@@ -80,9 +80,7 @@ def snli(checkpoint_path):
   model = NLINet.load_from_checkpoint(checkpoint_path).to(device)
   model.eval()
   trainer = Trainer(weights_summary=None)
-  test_result = trainer.test(model,
-                             test_dataloaders=test_loader.to(device),
-                             verbose=True)
+  test_result = trainer.test(model, test_dataloaders=test_loader, verbose=True)
   print(test_result)
   return test_result
 

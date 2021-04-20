@@ -20,7 +20,7 @@ class NLINet(pl.LightningModule):
     self.save_hyperparameters()
     self.model = InferSent(encoder_type, enc_hidden_dim, cls_hidden_dim)
     # Loss
-    self.criterion = torch.nn.CrossEntropyLoss()
+    self.criterion = torch.nn.CrossEntropyLoss(ignore_index=1)
     # Metrics
     self.train_correct = 0
     self.val_correct = 0

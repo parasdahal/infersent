@@ -85,10 +85,15 @@ class BiLSTMEncoder(nn.Module):
 
   def forward(self, x):
 
+    lengths = [len(sent) for sent in x]
+    x = nn.utils.rnn.pack_padded_sequence(x, lengths, batch_first=True)
+
     h0 = torch.zeros(2, x.shape[0], self.hidden_dim).to(self.device)
     c0 = torch.zeros(2, x.shape[0], self.hidden_dim).to(self.device)
     x = self.projection(x)
-    output, _ = self.lstm(x, (h0, c0))
+    padded_output, _ = self.lstm(x, (h0, c0))
+    output, _ = nn.utils.rnn.pad_packed_sequence(padded_output,
+                                                 batch_first=True)
 
     if self.maxpool:
       # Perform maxpool on each output time step
