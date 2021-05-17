@@ -1,4 +1,4 @@
-name: atcs-pytorch
+name: atcs-infersent
 channels:
   - pytorch
   - defaults
