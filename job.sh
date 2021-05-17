@@ -20,6 +20,7 @@ module load Anaconda3/2018.12
 # Your job starts in the directory where you call sbatch
 cd $HOME/infersent
 # # Activate your environment
-conda activate atcs-pytorch
+source ~/anaconda3/bin/activate
+conda activate infersent
 # # Run your code
 srun python train.py --encoder_type='BiLSTM'
