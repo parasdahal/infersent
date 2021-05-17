@@ -1,4 +1,4 @@
-module load Anaconda3/2018.12#!/bin/bash
+#!/bin/bash
 
 #SBATCH --partition=gpu_shared_course
 #SBATCH --gres=gpu:1
@@ -18,8 +18,8 @@ module load NCCL/2.5.6-CUDA-10.1.243
 module load Anaconda3/2018.12
 
 # Your job starts in the directory where you call sbatch
-# cd $HOME/...
+cd $HOME/infersent
 # # Activate your environment
-# source activate ...
+conda activate atcs-pytorch
 # # Run your code
-# srun python -u ...
+srun python train.py --encoder_type='BiLSTM'
