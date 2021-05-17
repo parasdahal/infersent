@@ -7,7 +7,6 @@ channels:
 dependencies:
   - absl-py=0.12.0
   - aiohttp=3.7.4
-  - appnope=0.1.2
   - argon2-cffi=20.1.0
   - astroid=2.5
   - async-timeout=3.0.1
@@ -83,7 +82,6 @@ dependencies:
   - libcrc32c=1.1.1
   - libcxx=11.1.0
   - libffi=3.3
-  - libgfortran=5.0.0
   - libgfortran5=9.3.0
   - liblapack=3.9.0
   - libpng=1.6.37
@@ -208,4 +206,5 @@ dependencies:
   - zstd=1.4.9
   - pip:
     - en-core-web-sm==3.0.0
-prefix: /opt/miniconda3/envs/atcs-pytorch
+    - appnope==0.1.2
+    - libgfortran==5.0.0
